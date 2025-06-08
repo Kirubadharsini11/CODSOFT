@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>To-Do List</title>
+ <style>
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(to right, #a18cd1, #fbc2eb);
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    height: 100vh;
+  }
+
+  .container {
+    background-color: #ffffffdd;
+    margin-top: 50px;
+    padding: 30px 40px;
+    border-radius: 15px;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+    width: 100%;
+    max-width: 500px;
+  }
+
+  h2 {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #6a11cb;
+    font-size: 28px;
+  }
+
+  input[type="text"] {
+    width: 70%;
+    padding: 10px;
+    font-size: 16px;
+    border: 2px solid #6a11cb;
+    border-radius: 10px;
+    outline: none;
+  }
+
+  button {
+    background: #6a11cb;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    font-size: 16px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+  }
+
+  button:hover {
+    background: #2575fc;
+  }
+
+  ul {
+    list-style: none;
+    padding: 0;
+    margin-top: 20px;
+  }
+
+  li {
+    background: #ffffff;
+    margin-bottom: 10px;
+    padding: 12px 15px;
+    border-left: 6px solid #6a11cb;
+    border-radius: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background 0.3s ease;
+  }
+
+  li:hover {
+    background: #f2f2f2;
+  }
+
+  li.done {
+    text-decoration: line-through;
+    color: gray;
+    background: #e6e6e6;
+    border-left-color: #bbb;
+  }
+
+  li button {
+    background: #ff6f61;
+    font-size: 14px;
+    margin-left: 8px;
+  }
+
+  li button:hover {
+    background: #d64541;
+  }
+</style>
+
+</head>
+<body>
+  <div class="container">
+    <h2>📝To-Do List</h2>
+    <input type="text" id="taskInput" placeholder="Enter a new task" />
+    <button onclick="addTask()">Add</button>
+    <ul id="taskList"></ul>
+  </div>
+
+
+
+  <script>
+    async function fetchTasks() {
+      const res = await fetch("/tasks");
+      const tasks = await res.json();
+      const list = document.getElementById("taskList");
+      list.innerHTML = "";
+      tasks.forEach((task, i) => {
+        const li = document.createElement("li");
+        li.className = task.done ? "done" : "";
+        li.innerHTML = `
+          ${task.task}
+          <span>
+            <button onclick="markDone(${i})">✔</button>
+            <button onclick="deleteTask(${i})">🗑</button>
+          </span>
+        `;
+        list.appendChild(li);
+      });
+    }
+
+    async function addTask() {
+      const taskText = document.getElementById("taskInput").value;
+      if (!taskText.trim()) return;
+      await fetch("/tasks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ task: taskText }),
+      });
+      document.getElementById("taskInput").value = "";
+      fetchTasks();
+    }
+
+    async function markDone(index) {
+      await fetch(`/tasks/${index}`, { method: "PUT" });
+      fetchTasks();
+    }
+
+    async function deleteTask(index) {
+      await fetch(`/tasks/${index}`, { method: "DELETE" });
+      fetchTasks();
+    }
+
+    fetchTasks();
+  </script>
+</body>
+</html>
