@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Password Generator</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Password Generator</h1>
+        <div class="generator-box">
+            <div class="controls">
+                <div class="control-group">
+                    <label for="length">Password Length (8-64):</label>
+                    <input type="number" id="length" min="8" max="64" value="12">
+                </div>
+                
+                <div class="control-group">
+                    <label>
+                        <input type="checkbox" id="uppercase" checked>
+                        Include Uppercase Letters (A-Z)
+                    </label>
+                </div>
+                
+                <div class="control-group">
+                    <label>
+                        <input type="checkbox" id="digits" checked>
+                        Include Digits (0-9)
+                    </label>
+                </div>
+                
+                <div class="control-group">
+                    <label>
+                        <input type="checkbox" id="special" checked>
+                        Include Special Characters (!@#$...)
+                    </label>
+                </div>
+                
+                <button id="generate-btn">Generate Password</button>
+            </div>
+            
+            <div class="result">
+                <div class="password-display" id="password"></div>
+                <div class="strength-display" id="strength"></div>
+                <button id="copy-btn">Copy to Clipboard</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('generate-btn').addEventListener('click', async () => {
+            const length = parseInt(document.getElementById('length').value);
+            const uppercase = document.getElementById('uppercase').checked;
+            const digits = document.getElementById('digits').checked;
+            const special = document.getElementById('special').checked;
+            
+            try {
+                const response = await fetch('/generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        length,
+                        uppercase,
+                        digits,
+                        special
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.error) {
+                    alert(data.error);
+                    return;
+                }
+                
+                document.getElementById('password').textContent = data.password;
+                document.getElementById('strength').textContent = `Strength: ${data.strength}`;
+                document.getElementById('strength').className = `strength-display ${data.strength.toLowerCase().replace(' ', '-')}`;
+                
+            } catch (error) {
+                alert('Error generating password: ' + error.message);
+            }
+        });
+        
+        document.getElementById('copy-btn').addEventListener('click', () => {
+            const password = document.getElementById('password').textContent;
+            if (!password) {
+                alert('No password to copy!');
+                return;
+            }
+            
+            navigator.clipboard.writeText(password)
+                .then(() => alert('Password copied to clipboard!'))
+                .catch(err => alert('Failed to copy: ' + err));
+        });
+    </script>
+</body>
+</html>
